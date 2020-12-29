@@ -12,19 +12,21 @@ $BOT->Initialize('1469941905:AAFhDAFK9SI9xKmPg_kb_L0fJqAzpSWxtyU');
 $ID = $BOT->GetChatID();
 $TEXT = $BOT->GetText();
 $MESSAGEID = $BOT->MessageID();
+$NAME = $BOT->GetFirstname();
+$RJ->Recognize($TEXT);
 if (preg_match('/\/[Ss]tart/', $TEXT)) {
-    $BOT->SendMessage($ID, 'OK');
+    $BOT->SendMessage($ID, "Hi,$NAME\nWelcome to Radio javan downloader.");
 } elseif (preg_match('/\/[Aa]bout/', $TEXT)) {
     $BOT->SendMessage($ID, "By : Incognito Coder from @IC_Mods\nGit Repo : https://github.com/Incognito-Coder/RadioJavan");
-} elseif (strpos($TEXT, 'mp3s') !== false) {
+} elseif ($RJ->MediaType()) {
     $Download = $RJ->Download('music', $TEXT);
     $Result = json_decode($Download);
     $BOT->SendMessage($ID, "Title: <code>$Result->title</code>\nType : <b>Music</b>", 'html', true, null, $MESSAGEID, $BOT->InlineKeyboard('📥 Download 📥', $Result->result));
-} elseif (strpos($TEXT, 'podcasts') !== false) {
+} elseif ($RJ->MediaType()) {
     $Download = $RJ->Download('podcast', $TEXT);
     $Result = json_decode($Download);
     $BOT->SendMessage($ID, "Title: <code>$Result->title</code>\nType : <b>Podcast</b>", 'html', true, null, $MESSAGEID, $BOT->InlineKeyboard('📥 Download 📥', $Result->result));
-} elseif (strpos($TEXT, 'videos') !== false) {
+} elseif ($RJ->MediaType()) {
     $Download = $RJ->Download('video', $TEXT);
     $Result = json_decode($Download);
     $BOT->SendMessage($ID, "Title: <code>$Result->title</code>\nType : <b>Music Video</b>", 'html', true, null, $MESSAGEID, $BOT->InlineKeyboard('📥 Download 📥', $Result->result));

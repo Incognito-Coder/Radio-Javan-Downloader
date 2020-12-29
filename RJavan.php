@@ -3,17 +3,19 @@
 namespace RadioJavan;
 
 error_reporting(0);
+
 /**
  * @author Incognito Coder
  * @copyright 2020 ICDev
  * @version 1.0
  */
-
 class Downloader
 {
+    private $Array = [];
     const MP3 = 'mp3s/mp3_host';
     const PODCAST = 'podcasts/podcast_host';
     const VIDEO = 'videos/video_host';
+
     /**
      * @param string $type pass media type here[video, music, podcast]
      * @param mixed $url given media link from radio javan.
@@ -21,18 +23,15 @@ class Downloader
     function Download($type, $url)
     {
         if ($type == "music") {
-            $query = parse_url($url, PHP_URL_PATH);
-            $split = explode('mp3/', $query);
+            $split = explode('mp3/', $this->Recognize($url));
             $parsed = $split[1];
             $file = "https://www.radiojavan.com/" . self::MP3 . "?id=$parsed";
         } elseif ($type == "podcast") {
-            $query = parse_url($url, PHP_URL_PATH);
-            $split = explode('podcast/', $query);
+            $split = explode('podcast/', $this->Recognize($url));
             $parsed = $split[1];
             $file = "https://www.radiojavan.com/" . self::PODCAST . "?id=$parsed";
         } elseif ($type == "video") {
-            $query = parse_url($url, PHP_URL_PATH);
-            $split = explode('video/', $query);
+            $split = explode('video/', $this->Recognize($url));
             $parsed = $split[1];
             $file = "https://www.radiojavan.com/" . self::VIDEO . "?id=$parsed";
         }
@@ -60,6 +59,31 @@ class Downloader
             return json_encode(['status' => true, 'result' => $reslut->host . "/media/music_video/hd/$parsed.mp4", 'title' => $parsed], 128) . PHP_EOL;
         } else {
             return json_encode(['status' => false, 'result' => 'incorrect data or another error occured.'], 128) . PHP_EOL;
+        }
+    }
+
+    function Recognize($url)
+    {
+        $this->Array = get_defined_vars();
+        if (strpos($url, 'rjplay.co')) {
+            $headers = get_headers($url, 1);
+            $query = parse_url($headers['Location'][1], PHP_URL_PATH);
+            return $query;
+        } elseif (strpos($url, 'radiojavan.com')) {
+            $query = parse_url($url, PHP_URL_PATH);
+            return $query;
+        }
+    }
+
+    function MediaType()
+    {
+        $file = $this->Recognize($this->Array['url']);
+        if (strpos($file, 'mp3s') !== false) {
+            return 'music';
+        } elseif (strpos($file, 'podcasts') !== false) {
+            return 'podcast';
+        } elseif (strpos($file, 'videos') !== false) {
+            return 'video';
         }
     }
 }
