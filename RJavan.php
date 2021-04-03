@@ -69,6 +69,10 @@ class Downloader
             $headers = get_headers($url, 1);
             $query = parse_url($headers['Location'][1], PHP_URL_PATH);
             return $query;
+        } elseif (strpos($url, 'rj.app')) {
+            $headers = get_headers($url, 1);
+            $query = parse_url($headers['Location'], PHP_URL_PATH);
+            return $query;
         } elseif (strpos($url, 'radiojavan.com')) {
             $query = parse_url($url, PHP_URL_PATH);
             return $query;
