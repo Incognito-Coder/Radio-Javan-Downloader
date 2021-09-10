@@ -4,8 +4,8 @@ namespace TelegramBot;
 
 /**
  * @author Incognito Coder
- * @copyright 2020 ICDev
- * @version 1.1.6
+ * @copyright 2020-2021 ICDev
+ * @version 1.2.0
  */
 class ICBot
 {
@@ -178,6 +178,20 @@ class ICBot
     }
 
     /**
+     * @param mixed $chat Target ChatID.
+     * @param mixed $from Forward Message From ChatID.
+     * @param mixed $msgid Desired Message ID.
+     */
+    function ForwardMessage($chat, $from, $msgid)
+    {
+        BOT('ForwardMessage', [
+            'chat_id' => $chat,
+            'from_chat_id' => $from,
+            'message_id' => $msgid
+        ]);
+    }
+
+    /**
      * @param string $text Enter Button Text.
      * @param string $url Link You Want To Be Open.
      */
@@ -298,6 +312,17 @@ class ICBot
     public function ChatTitle()
     {
         return $this->Data['message']['chat']['title'];
+    }
+
+    /**
+     * @meta Check Is User Joined On Desired Chat.
+     * @param string $chatid Fill With (username,id).
+     * @param string $userid Enter UserID.
+     */
+    function GetChatMember($chatid, $userid)
+    {
+        $check = json_decode(file_get_contents('https://api.telegram.org/bot' . API_KEY . "/getChatMember?chat_id=$chatid&user_id=" . $userid))->result->status;
+        return $check;
     }
 
     const TEXT = 'text';
