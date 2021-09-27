@@ -7,7 +7,7 @@ error_reporting(0);
 /**
  * @author Incognito Coder
  * @copyright 2020-2021 ICDev
- * @version 1.8
+ * @version 1.9
  */
 class Downloader
 {
@@ -76,6 +76,10 @@ class Downloader
             $query = parse_url($headers['Location'], PHP_URL_PATH);
             return $query;
         } elseif (strpos($url, 'rj.app')) {
+            $headers = get_headers($url, 1);
+            $query = parse_url($headers['Location'], PHP_URL_PATH);
+            return $query;
+        } elseif (strpos($url, 'rjapp.app')) {
             $headers = get_headers($url, 1);
             $query = parse_url($headers['Location'], PHP_URL_PATH);
             return $query;
