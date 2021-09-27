@@ -2,19 +2,39 @@
 
 namespace TelegramBot;
 
+error_reporting(0);
 /**
  * @author Incognito Coder
  * @copyright 2020-2021 ICDev
- * @version 1.2.0
+ * @version 1.5.2
  */
 class ICBot
 {
+    const TEXT = 'text';
+    const PHOTO = 'photo';
+    const VIDEO = 'video';
+    const DOCUMENT = 'document';
+    const AUDIO = 'music';
+    const VOICE = 'voice';
+    const CONTACT = 'contact';
+    const CALLBACK_QUERY = 'callback_query';
+    const INLINE_QUERY = 'inline_query';
     private $Data = [];
     private $Array = [];
 
     public function __construct()
     {
         $this->Data = $this->Update();
+    }
+
+    public function Update()
+    {
+        if (empty($this->Data)) {
+            $update = file_get_contents('php://input');
+            return json_decode($update, true);
+        } else {
+            return $this->Data;
+        }
     }
 
     /**
@@ -37,6 +57,15 @@ class ICBot
                 return json_decode($res);
             }
         }
+    }
+
+    /**
+     * @meta This Function Easily Sets WebHook.
+     * @param $Input Enter Url.
+     */
+    function SetWebHook($Input)
+    {
+        BOT('setWebhook', ['url' => $Input]);
     }
 
     /**
@@ -76,6 +105,18 @@ class ICBot
             'text' => $text,
             'parse_mode' => $parse,
             'reply_markup' => $keyboard
+        ]);
+    }
+
+    /**
+     * @param mixed $chat Target ChatID.
+     * @param int $msgid ID of Message.
+     */
+    function DeleteMessage($chat, $msgid)
+    {
+        BOT('deleteMessage', [
+            'chat_id' => $chat,
+            'message_id' => $msgid
         ]);
     }
 
@@ -155,6 +196,30 @@ class ICBot
 
     /**
      * @param mixed $chat Target ChatID.
+     * @param string $file Audio To Send.
+     * @param string $caption Some Details About Voice (Optional)
+     * @param string $parse Must be HTML or MarkDown (Optional)
+     * @param integer $duration Duration of the voice message in seconds (Optional)
+     * @param boolean $notification Sends the message silently. Users will receive a notification with no sound (Optional)
+     * @param integer $reply If the message is a reply, ID of the original message (Optional)
+     * @param mixed $keyboard Put Variable or Leave It Null (Optional)
+     */
+    function SendVoice($chat, $file, $caption = null, $parse = null, $duration = null, $notification = null, $reply = null, $keyboard = null)
+    {
+        BOT('sendVoice', [
+            'chat_id' => $chat,
+            'voice' => $file,
+            'caption' => $caption,
+            'parse_mode' => $parse,
+            'duration' => $duration,
+            'disable_notification' => $notification,
+            'reply_to_message_id' => $reply,
+            'reply_markup' => $keyboard
+        ]);
+    }
+
+    /**
+     * @param mixed $chat Target ChatID.
      * @param string $file Document To Send.
      * @param string $caption Some Details About File (Optional)
      * @param string $parse Must be HTML or MarkDown (Optional)
@@ -174,6 +239,18 @@ class ICBot
             'disable_notification' => $notification,
             'reply_to_message_id' => $reply,
             'reply_markup' => $keyboard
+        ]);
+    }
+
+    /**
+     * @param mixed $chat Target ChatID.
+     * @param mixed $action Type of action to broadcast. Choose one, depending on what the user is about to receive: typing for text messages, upload_photo for photos, record_video or upload_video for videos, record_voice or upload_voice for voice notes, upload_document for general files, find_location for location data, record_video_note or upload_video_note for video notes.
+     */
+    function SendChatAction($chat, $action)
+    {
+        BOT('sendChatAction', [
+            'chat_id' => $chat,
+            'action' => $action
         ]);
     }
 
@@ -201,7 +278,7 @@ class ICBot
     }
 
     /**
-     * @param string $data Enter Buttons And Links As Json.
+     * @param string $json Enter Buttons And Links As Json.
      */
     public function MultiInlineKeyboard($json)
     {
@@ -217,21 +294,19 @@ class ICBot
     }
 
     /**
-     * @param string $data Enter Buttons As Json.
+     * @param string $json Enter Buttons As Json.
      */
     public function MultiKeyboard($json)
     {
         return json_encode(['keyboard' => $json, 'resize_keyboard' => true]);
     }
 
-    public function Update()
+    /**
+     * @meta Remove Keyboard.
+     */
+    public function RemoveKeyboard()
     {
-        if (empty($this->Data)) {
-            $update = file_get_contents('php://input');
-            return json_decode($update, true);
-        } else {
-            return $this->Data;
-        }
+        return json_encode(['remove_keyboard' => true]);
     }
 
     /**
@@ -315,6 +390,14 @@ class ICBot
     }
 
     /**
+     * @meta Return Identifier Of Forwarded Message At Reply.
+     */
+    public function ForwarderID()
+    {
+        return $this->Data['message']['reply_to_message']['forward_from']['id'];
+    }
+
+    /**
      * @meta Check Is User Joined On Desired Chat.
      * @param string $chatid Fill With (username,id).
      * @param string $userid Enter UserID.
@@ -324,12 +407,6 @@ class ICBot
         $check = json_decode(file_get_contents('https://api.telegram.org/bot' . API_KEY . "/getChatMember?chat_id=$chatid&user_id=" . $userid))->result->status;
         return $check;
     }
-
-    const TEXT = 'text';
-    const PHOTO = 'photo';
-    const VIDEO = 'video';
-    const DOCUMENT = 'document';
-    const AUDIO = 'music';
 
     /**
      * @meta Return Update Type.
@@ -348,14 +425,20 @@ class ICBot
         if (isset($this->Data['message']['audio'])) {
             return self::AUDIO;
         }
+        if (isset($this->Data['message']['voice'])) {
+            return self::VOICE;
+        }
         if (isset($this->Data['message']['document'])) {
             return self::DOCUMENT;
+        }
+        if (isset($this->Data['message']['contact'])) {
+            return self::CONTACT;
         }
     }
 
     /**
      * @meta Return Current FileID.
-     * @param string $type Fill With (photo,video,audio,document).
+     * @param string $type Fill With (photo,video,audio,voice,document).
      */
     public function GetFileID($type)
     {
@@ -369,22 +452,14 @@ class ICBot
             case 'audio';
                 $new = $this->Data['message']['audio']['file_id'];
                 break;
+            case 'voice';
+                $new = $this->Data['message']['voice']['file_id'];
+                break;
             case 'document';
                 $new = $this->Data['message']['document']['file_id'];
                 break;
         }
         return $new;
-    }
-
-    /**
-     * @param string $file_id Your FileID Stored On Telegram Servers.
-     */
-    public function GetFile($file_id)
-    {
-
-        $this->Array = get_defined_vars();
-        $download = json_decode(file_get_contents('https://api.telegram.org/bot' . API_KEY . '/getFile?file_id=' . $file_id), true);
-        return $download;
     }
 
     /**
@@ -413,6 +488,17 @@ class ICBot
     }
 
     /**
+     * @param string $file_id Your FileID Stored On Telegram Servers.
+     */
+    public function GetFile($file_id)
+    {
+
+        $this->Array = get_defined_vars();
+        $download = json_decode(file_get_contents('https://api.telegram.org/bot' . API_KEY . '/getFile?file_id=' . $file_id), true);
+        return $download;
+    }
+
+    /**
      * @meta Return Music Details.
      * @param string $value Fill With (title,artist,mime,thumb,size).
      */
@@ -438,9 +524,64 @@ class ICBot
         return $new;
     }
 
+
+    /**
+     * @meta Return Document Details.
+     * @param string $value Fill With (name,id,size,unique,thumb,mime).
+     */
+    public function Document($value)
+    {
+        switch ($value) {
+            case 'name';
+                $new = $this->Data['message']['document']['file_name'];
+                break;
+            case 'id';
+                $new = $this->Data['message']['document']['file_id'];
+                break;
+            case 'mime';
+                $new = $this->Data['message']['document']['mime_type'];
+                break;
+            case 'thumb';
+                $new = $this->Data['message']['document']['thumb'];
+                break;
+            case 'size';
+                $new = $this->Data['message']['document']['file_size'];
+                break;
+            case 'unique';
+                $new = $this->Data['message']['document']['file_unique_id'];
+        }
+        return $new;
+    }
+
+    /**
+     * @meta Return Contact Details.
+     * @param string $value Fill With (phone,first,last,id,vcard).
+     */
+    public function Contact($value)
+    {
+        switch ($value) {
+            case 'phone';
+                $new = $this->Data['message']['contact']['phone_number'];
+                break;
+            case 'first';
+                $new = $this->Data['message']['contact']['first_name'];
+                break;
+            case 'last';
+                $new = $this->Data['message']['contact']['last_name'];
+                break;
+            case 'id';
+                $new = $this->Data['message']['contact']['user_id'];
+                break;
+            case 'vcard';
+                $new = $this->Data['message']['contact']['vcard'];
+                break;
+        }
+        return $new;
+    }
+
     /**
      * @meta Return CallBack Details.
-     * @param string $select Fill With (id,data,chatid,msgid).
+     * @param string $select Fill With (id,from,data,chatid,msgid).
      * @return mixed
      */
     public function CallBackQuery($select)
@@ -448,6 +589,9 @@ class ICBot
         switch ($select) {
             case 'id';
                 $return = $this->Data['callback_query']['id'];
+                break;
+            case 'from';
+                $return = $this->Data['callback_query']['from']['id'];
                 break;
             case 'data';
                 $return = $this->Data['callback_query']['data'];
@@ -479,9 +623,6 @@ class ICBot
         }
         return $return;
     }
-
-    const CALLBACK_QUERY = 'callback_query';
-    const INLINE_QUERY = 'inline_query';
 
     /**
      * @return string Updates Type ['callback_query','inline_query'].
@@ -521,5 +662,42 @@ class ICBot
             'inline_query_id' => $id,
             'results' => json_encode($json)
         ]);
+    }
+
+    /**
+     * @meta Pin A Message In Chat.
+     * @param mixed $chat Where You Want To Pin Message.
+     * @param int $msgid Identifier Of A Message To Pin.
+     * @param boolean $notification Pass True, if it is not necessary to send a notification to all chat members about the new pinned message. Notifications are always disabled in channels and private chats.
+     */
+    function PinMessage($chat, $msgid, $notification = false)
+    {
+        BOT('pinChatMessage', [
+            'chat_id' => $chat,
+            'message_id' => $msgid,
+            'disable_notification' => $notification
+        ]);
+    }
+
+    /**
+     * @meta Clear Pinned Message In Chat.
+     * @param mixed $chat Where You Want To Remove Pinned Message.
+     * @param int $msgid Identifier Of A Message To Pin.
+     */
+    function UnPinMessage($chat, $msgid)
+    {
+        BOT('unpinAllChatMessages', [
+            'chat_id' => $chat,
+            'message_id' => $msgid
+        ]);
+    }
+
+    /**
+     * @meta Remove All Pinned Messages In Chat.
+     * @param mixed $chat Where You Want To Remove Pinned Message.
+     */
+    function UnPinAllChatMessages($chat)
+    {
+        BOT('unpinAllChatMessages', ['chat_id' => $chat]);
     }
 }
